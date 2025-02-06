@@ -19,7 +19,7 @@ body {
   color: white;
 }
 
-.container {
+.containers {
   height: 90vh;
   width: 80vw;
   background-color: rgba(17, 25, 40, 0.75);

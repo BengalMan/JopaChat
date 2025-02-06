@@ -7,6 +7,7 @@ import { auth } from "./lib/firebase";
 import { useUserStore } from "./lib/userStore";
 import { useChatStore } from "./lib/chatStore";
 import { useNavigate } from "react-router-dom";
+import LoginScreen from "./components/login/LoginScreen";
 
 const App = () => {
   const { currentUser, isLoading, fetchUserInfo } = useUserStore();
@@ -31,7 +32,7 @@ const App = () => {
   if (isLoading || checkingAuth) return <div className="loading">Loading...</div>;
 
   return (
-    <div className="container">
+    <div className="containers">
       {currentUser ? (
         <>
           <List />
@@ -39,7 +40,7 @@ const App = () => {
         </>
       ) : (
         <div style={{ visibility: "hidden", position: "absolute" }}>
-          <Login />
+          <LoginScreen />
         </div>
       )}
     </div>

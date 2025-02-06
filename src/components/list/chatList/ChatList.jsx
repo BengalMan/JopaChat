@@ -12,6 +12,7 @@ const ChatList = () => {
     const { currentUser } = useUserStore();
     const { changeChat } = useChatStore();
 
+
     useEffect(() => {
         if (!currentUser || !currentUser.id) return; // Ensure currentUser is available
 

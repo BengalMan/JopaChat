@@ -5,16 +5,23 @@ import { arrayUnion, doc, getDoc, onSnapshot, updateDoc } from 'firebase/firesto
 import { auth, db } from "../../lib/firebase"
 import { useChatStore } from '../../lib/chatStore'
 import { useUserStore } from '../../lib/userStore'
+import { useNavigate } from 'react-router'
 
 const Chat = () => { // TODO maybe instead of the top being empty you could fetch fro an api some random love quotes.
     const [chat, setChat] = useState()
     const [open, setOpen] = useState(false)
     const [text, setText] = useState("")
 
+    const navigate = useNavigate()
+
     const endRef = useRef(null)
 
     const { currentUser } = useUserStore()
     const { chatId, user } = useChatStore()
+
+    console.log(currentUser)
+    console.log(chatId)
+    console.log(user)
 
     useEffect(() => {
         endRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -80,6 +87,11 @@ const Chat = () => { // TODO maybe instead of the top being empty you could fetc
 
     }
 
+    const handleLogout = () => {
+        auth.signOut()
+        navigate("/login");
+    }
+
     return (
         <div className="chat">
             <div className="top">
@@ -92,7 +104,7 @@ const Chat = () => { // TODO maybe instead of the top being empty you could fetc
                     </div>
                 </div>
                 <div className="icons">
-                    <button className='Logout' onClick={() => auth.signOut()}>Logout</button>
+                    <button className='Logout' onClick={handleLogout}>Logout</button>
                 </div>
             </div>
             <div className="center">
