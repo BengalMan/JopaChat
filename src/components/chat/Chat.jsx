@@ -12,6 +12,7 @@ const Chat = () => {
     const [chat, setChat] = useState();
     const [text, setText] = useState("");
     const [messageCount, setMessageCount] = useState(0);
+    const [bothClicked, setBothClicked] = useState(false);
     const navigate = useNavigate();
     const endRef = useRef(null);
 
@@ -50,6 +51,23 @@ const Chat = () => {
     }, [currentUser, setChatId, changeChat]);
 
     useEffect(() => {
+        // Listen for updates in Firestore
+        const chatRef = doc(db, "chats", chatId);
+        const unsubscribe = onSnapshot(chatRef, (docSnap) => {
+            if (docSnap.exists()) {
+                const clicks = docSnap.data().clicks || {};
+                if (clicks.user1 && clicks.user2) {
+                    setBothClicked(true);
+                } else {
+                    setBothClicked(false);
+                }
+            }
+        });
+
+        return () => unsubscribe();
+    }, [chatId]);
+
+    useEffect(() => {
         if (!chatId) return;
         const unSub = onSnapshot(doc(db, "chats", chatId), (res) => {
             setChat(res.data());
@@ -62,7 +80,7 @@ const Chat = () => {
     }, [chatId]);
 
     const handleSend = async () => {
-        if (text === "" || messageCount >= 5) return; // Sprečavamo slanje ako je dostignut limit
+        if (text === "" || messageCount >= 5) return;
 
         try {
             await updateDoc(doc(db, "chats", chatId), {
@@ -72,45 +90,26 @@ const Chat = () => {
                     createdAt: new Date(),
                 })
             });
-            setMessageCount(prev => prev + 1);
+
             setText("");
         } catch (err) {
             console.log(err);
         }
     };
 
+
     const handleLogout = () => {
         auth.signOut();
         navigate("/login");
     };
 
-    const handleSkip = async () => {
-        console.log(user.matchedWith)
-        console.log(currentUser.matchedWith)
 
-        const userRef = collection(db, "users")
-        const chatsRef = doc(db, "chats", chatId);
-
-
-        try {
-            deleteDoc(chatsRef)
-            await updateDoc(doc(userRef, currentUser.id), {
-                matchedWith: ""
-            })
-            await updateDoc(doc(userRef, currentUser.matchedWith), {
-                matchedWith: ""
-            })
-        } catch (err) {
-            console.log(err)
-        }
-    }
 
     return (
         <div className="chat">
             <div className="top">
                 <div className="user">
                     <Report />
-                    <button onClick={handleSkip}>Skip</button>
                     <div className="texts">
                         <span>{user?.username || "Unknown"}</span>
                         <p>Mozes poslat jos {5 - messageCount} poruka.</p>

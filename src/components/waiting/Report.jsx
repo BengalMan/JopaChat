@@ -2,11 +2,13 @@ import { doc, getDoc, updateDoc, arrayUnion } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import { db } from "../../lib/firebase";
 import { useChatStore } from "../../lib/chatStore";
+import { useUserStore } from "../../lib/userStore";
 
 const Report = () => {
     const [matchedWith, setMatchedWith] = useState(null);
     const userId = localStorage.getItem("userId");
     const { user } = useChatStore();
+    const { currentUser } = useUserStore()
 
     useEffect(() => {
         const fetchUserData = async () => {
@@ -40,7 +42,7 @@ const Report = () => {
 
             await updateDoc(userRef, {
                 reports: reports + 1,
-                reportedBy: arrayUnion(user.id) // Add user to reportedBy array
+                reportedBy: arrayUnion(currentUser.id + " " + currentUser.username) // Add user to reportedBy array
             });
 
             alert("Korisnik je prijavljen.");
