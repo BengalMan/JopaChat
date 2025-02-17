@@ -65,7 +65,7 @@ const App = () => {
   const navigate = useNavigate();
   const [checkingAuth, setCheckingAuth] = useState(true); // Track authentication check
   const [waiting, setWaiting] = useState(true); // Da pratimo status čekanja
-  console.log(currentUser)
+
   // Funkcija za promjenu chata
   const changeChat = (newChatId, matchedUser) => {
     setChatId(newChatId); // Postavljanje chatId u store
@@ -85,8 +85,6 @@ const App = () => {
       unSub();
     };
   }, [fetchUserInfo, navigate]);
-
-
 
   // Dodavanje logike za kreiranje chata kad je korisnik matchan
   useEffect(() => {
@@ -116,7 +114,7 @@ const App = () => {
       {currentUser ? (
         <>
           {chatId ? (
-            <Chat /> // Prikazivanje chata ako postoji chatId
+            <Chat />
           ) : (
             // Prikazivanje MatchScreen samo ako nije matchan ili je u čekanju
             waiting && <MatchScreen />

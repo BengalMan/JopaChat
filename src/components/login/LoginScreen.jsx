@@ -17,37 +17,41 @@ export const loginScreenAction = async ({ request }) => {
     const gender = formData.get("gender");
     const number = formData.get("number");
 
+    try {
+        const { user, error } =
+            formId === 'login'
+                ? await signInUser(email, password)
+                : await registerUser(username, email, password, gender, number);
 
-    const { user, error } =
-        formId === 'login'
-            ? await signInUser(email, password)
-            : await registerUser(username, email, password, gender, number);
-
-    if (user) {
-        console.log("Uspješna prijava:", user);
-        return redirect("/");  // Preusmjerenje
-    }
-
-    if (!user) {
-        alert("Korisnik ne postoji ili korisnik već postoji.");
-    }
-
-    // Error
-    if (error) {
-        const errorMessage = error?.message || "Došlo je do greške. Pokušajte ponovo.";
-        console.log(error)
-
-        // Specificno
-        if (error.code === "auth/invalid-credential") {
-            alert("Pogrešni podaci. Provjerite email i lozinku.");
-        } else {
-            alert(errorMessage);
+        if (user) {
+            console.log("Uspješna prijava:", user);
+            return redirect("/");
+            window.location.reload();
         }
-    } else {
-        alert("Alo! Something went wrong.");
-    }
 
-    return null;
+        if (!user) {
+            alert("Korisnik ne postoji ili korisnik već postoji.");
+        }
+
+        // Error
+        if (error) {
+            const errorMessage = error?.message || "Došlo je do greške. Pokušajte ponovo.";
+            console.log(error)
+
+            // Specificno
+            if (error.code === "auth/invalid-credential") {
+                alert("Pogrešni podaci. Provjerite email i lozinku.");
+            } else {
+                alert(errorMessage);
+            }
+        } else {
+            alert("Alo! Something went wrong.");
+        }
+
+        return null;
+    } catch (error) {
+        return { errorMessage: "Došlo je do greške. Pokušajte ponovo." };
+    }
 };
 
 const LoginScreen = () => {

@@ -7,12 +7,14 @@ import { useChatStore } from '../../lib/chatStore'
 import { useUserStore } from '../../lib/userStore'
 import { useNavigate } from 'react-router'
 import Report from '../waiting/Report'
+import TermsPopup from '../waiting/TermsPopup'
 
 const Chat = () => {
+    const [isOpen, setIsOpen] = useState(true);
     const [chat, setChat] = useState();
     const [text, setText] = useState("");
     const [messageCount, setMessageCount] = useState(0);
-    const [bothClicked, setBothClicked] = useState(false);
+    const [dogovoreno, setDogovoreno] = useState(false)
     const navigate = useNavigate();
     const endRef = useRef(null);
 
@@ -50,37 +52,39 @@ const Chat = () => {
         fetchMatchedChat();
     }, [currentUser, setChatId, changeChat]);
 
-    useEffect(() => {
-        // Listen for updates in Firestore
-        const chatRef = doc(db, "chats", chatId);
-        const unsubscribe = onSnapshot(chatRef, (docSnap) => {
-            if (docSnap.exists()) {
-                const clicks = docSnap.data().clicks || {};
-                if (clicks.user1 && clicks.user2) {
-                    setBothClicked(true);
-                } else {
-                    setBothClicked(false);
-                }
-            }
-        });
-
-        return () => unsubscribe();
-    }, [chatId]);
 
     useEffect(() => {
         if (!chatId) return;
         const unSub = onSnapshot(doc(db, "chats", chatId), (res) => {
             setChat(res.data());
 
-            // Pronalazimo koliko je trenutni korisnik već poslao poruka
             const userMessages = res.data()?.messages?.filter(msg => msg.senderId === currentUser.id) || [];
             setMessageCount(userMessages.length);
         });
         return () => unSub();
     }, [chatId]);
 
+
+    useEffect(() => {
+        if (!currentUser?.id) return;
+
+        const userRef = doc(db, "users", currentUser.id);
+
+        const unsubscribe = onSnapshot(userRef, (docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                setDogovoreno(data.dogovoreno ?? false);
+            } else {
+                console.log('error')
+            }
+        });
+
+        return () => unsubscribe();
+    }, [currentUser]);
+
+
     const handleSend = async () => {
-        if (text === "" || messageCount >= 5) return;
+        if (text === "" || (dogovoreno === false && messageCount >= 5)) return;
 
         try {
             await updateDoc(doc(db, "chats", chatId), {
@@ -98,24 +102,57 @@ const Chat = () => {
     };
 
 
+
     const handleLogout = () => {
         auth.signOut();
         navigate("/login");
     };
 
+    const handleKava = async () => {
 
+        if (dogovoreno == false) {
+            const userRef = doc(db, "users", currentUser.id);
+            setDogovoreno(true);
+
+            try {
+                await updateDoc(userRef, { dogovoreno: true });
+            } catch (err) {
+                console.log(err);
+            }
+        }
+    };
+
+    const handleClose = () => {
+        setIsOpen(false)
+    }
 
     return (
         <div className="chat">
+            {isOpen && <TermsPopup onClose={handleClose} />}
             <div className="top">
                 <div className="user">
-                    <Report />
                     <div className="texts">
-                        <span>{user?.username || "Unknown"}</span>
-                        <p>Mozes poslat jos {5 - messageCount} poruka.</p>
+                        <span>{"Nepoznata Osoba"}</span>
+                        {dogovoreno ? (
+                            <p></p>
+                        ) : (
+                            <p>Možeš poslati još {5 - messageCount} poruka.</p>
+                        )}
                     </div>
+
+                    <button
+                        onClick={handleKava}
+                        disabled={messageCount < 5}
+                        className={`py-1 px-2 w-16 text-sm rounded-md text-white font-semibold transition duration-300 ease-in-out 
+            ${dogovoreno ? "bg-green-400 hover:bg-green-500" : "bg-red-400 hover:bg-red-500"} 
+            ${messageCount < 5 ? "opacity-50 cursor-not-allowed" : ""}`}
+                    >
+                        {dogovoreno ? "✔" : "Kava?☕"}
+                    </button>
+
+                    <Report disabled={messageCount < 5} className={`${messageCount < 5 ? "opacity-50 cursor-not-allowed" : ""}`} />
                 </div>
-                <div className="icons">
+                <div className="icons pl-4">
                     <button className='Logout' onClick={handleLogout}>Logout</button>
                 </div>
             </div>
@@ -134,13 +171,12 @@ const Chat = () => {
                     value={text}
                     placeholder='Type a message...'
                     onChange={e => setText(e.target.value)}
-                    disabled={messageCount == 6}
-                    minLength={20}
+                    disabled={dogovoreno ? false : messageCount >= 5}
                 />
                 <button
                     className='sendButton'
                     onClick={handleSend}
-                    disabled={messageCount > 5}
+                    disabled={dogovoreno ? false : messageCount >= 5}
                 >
                     Send
                 </button>
@@ -150,3 +186,5 @@ const Chat = () => {
 };
 
 export default Chat;
+
+
